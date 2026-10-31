@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+reconflow_*.md
+reconflow_*.html
+*.log
+.vscode/
+.idea/
+.DS_Store

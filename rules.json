@@ -1,0 +1,68 @@
+{
+  "_comment": "Reglas de enumeración por servicio. Placeholders: {target} {port}. run_default=true se ejecuta con --run (herramienta ligera); false = solo se sugiere. Edita libremente.",
+  "aliases": {
+    "microsoft-ds": "smb",
+    "netbios-ssn": "smb",
+    "ms-wbt-server": "rdp",
+    "domain": "dns",
+    "ldapssl": "ldap",
+    "http-proxy": "http",
+    "http-alt": "http",
+    "ssl/http": "https",
+    "ssl/https": "https",
+    "imaps": "imap",
+    "pop3s": "pop3",
+    "ms-sql-s": "mssql",
+    "mysql": "mysql",
+    "postgresql": "postgres"
+  },
+  "services": {
+    "http": [
+      { "tool": "whatweb", "cmd": "whatweb -a3 http://{target}:{port}", "note": "Fingerprint de tecnologías web", "run_default": true },
+      { "tool": "curl", "cmd": "curl -sI http://{target}:{port}", "note": "Cabeceras HTTP", "run_default": true },
+      { "tool": "feroxbuster", "cmd": "feroxbuster -u http://{target}:{port} -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt", "note": "Fuzzing de directorios", "run_default": false },
+      { "tool": "nikto", "cmd": "nikto -h http://{target}:{port}", "note": "Escaneo de vulnerabilidades web (ruidoso)", "run_default": false }
+    ],
+    "https": [
+      { "tool": "whatweb", "cmd": "whatweb -a3 https://{target}:{port}", "note": "Fingerprint de tecnologías web", "run_default": true },
+      { "tool": "curl", "cmd": "curl -skI https://{target}:{port}", "note": "Cabeceras HTTP(S)", "run_default": true },
+      { "tool": "sslscan", "cmd": "sslscan {target}:{port}", "note": "Ciphers y certificado TLS", "run_default": false },
+      { "tool": "feroxbuster", "cmd": "feroxbuster -k -u https://{target}:{port} -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt", "note": "Fuzzing de directorios", "run_default": false }
+    ],
+    "smb": [
+      { "tool": "nxc", "cmd": "nxc smb {target}", "note": "Info del host SMB (NetExec)", "run_default": true },
+      { "tool": "enum4linux-ng", "cmd": "enum4linux-ng -A {target}", "note": "Enumeración completa SMB/RPC", "run_default": false },
+      { "tool": "smbclient", "cmd": "smbclient -L //{target}/ -N", "note": "Listar recursos compartidos (null session)", "run_default": true }
+    ],
+    "ftp": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script ftp-anon,ftp-syst {target}", "note": "Login anónimo y banner", "run_default": true }
+    ],
+    "ssh": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script ssh2-enum-algos,ssh-auth-methods {target}", "note": "Algoritmos y métodos de autenticación", "run_default": false }
+    ],
+    "rdp": [
+      { "tool": "nxc", "cmd": "nxc rdp {target}", "note": "Info RDP y comprobación NLA", "run_default": false }
+    ],
+    "dns": [
+      { "tool": "dig", "cmd": "dig any @{target} {target}", "note": "Consulta DNS; probar transferencia de zona (AXFR)", "run_default": false }
+    ],
+    "ldap": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script ldap-rootdse {target}", "note": "RootDSE / contexto de nombres", "run_default": false }
+    ],
+    "mssql": [
+      { "tool": "nxc", "cmd": "nxc mssql {target}", "note": "Enumeración de MSSQL", "run_default": false }
+    ],
+    "mysql": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script mysql-info {target}", "note": "Info del servidor MySQL", "run_default": false }
+    ],
+    "postgres": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script pgsql-brute {target}", "note": "Info / prueba de credenciales PostgreSQL", "run_default": false }
+    ],
+    "smtp": [
+      { "tool": "nmap", "cmd": "nmap -p{port} --script smtp-commands,smtp-enum-users {target}", "note": "Comandos y usuarios SMTP", "run_default": false }
+    ],
+    "snmp": [
+      { "tool": "snmpwalk", "cmd": "snmpwalk -v2c -c public {target}", "note": "Walk SNMP con community 'public'", "run_default": false }
+    ]
+  }
+}

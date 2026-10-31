@@ -1,0 +1,8 @@
+# reconflow no necesita dependencias de Python: usa solo la librería estándar.
+# Opcional en Windows para colores en consola:
+colorama>=0.4 ; platform_system == "Windows"
+
+# Herramientas EXTERNAS que orquesta (instálalas en tu Parrot/Kali según uses):
+#   nmap, whatweb, feroxbuster, nikto, enum4linux-ng, netexec (nxc),
+#   smbclient, sslscan, snmpwalk, dig
+# reconflow detecta cuáles tienes; las que falten las deja como sugerencia.
