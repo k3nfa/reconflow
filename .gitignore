@@ -8,3 +8,8 @@ reconflow_*.html
 .vscode/
 .idea/
 .DS_Store
+*.md # opcional: pero ojo, NO ignores README.md
+
+# reportes de prueba
+fireflow.md
+reconflow_*.md
