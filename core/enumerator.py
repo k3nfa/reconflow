@@ -28,16 +28,34 @@ class Action:
 
 
 def load_rules(path: str) -> dict:
+    """Carga rules.json validando su estructura básica."""
     with open(path, "r", encoding="utf-8") as fh:
-        return json.load(fh)
+        data = json.load(fh)
+    if not isinstance(data, dict) or "services" not in data:
+        raise ValueError("rules.json no tiene la clave 'services' esperada.")
+    if not isinstance(data.get("services"), dict):
+        raise ValueError("'services' en rules.json debe ser un objeto.")
+    return data
 
 
-def _canonical(service: str, port: int, aliases: dict) -> Optional[str]:
-    """Normaliza el nombre de servicio de nmap a una clave de reglas."""
-    s = (service or "").lower()
+def _service_key(port, aliases: dict, services: dict) -> Optional[str]:
+    """Clave de reglas para un puerto, resolviendo alias, TLS y fallback.
+
+    Un servicio HTTP sobre TLS (p.ej. nmap 'http' con tunnel='ssl' en el 443)
+    se mapea a 'https' para que las recomendaciones usen el esquema correcto.
+    """
+    s = (port.service or "").lower()
     if s in aliases:
         s = aliases[s]
-    return s
+    if getattr(port, "is_tls", False) and s == "http":
+        s = "https"
+    if s in services:
+        return s
+    # Fallback por número de puerto cuando nmap no identifica el servicio.
+    fb = _PORT_FALLBACK.get(port.port)
+    if fb and getattr(port, "is_tls", False) and fb == "http":
+        fb = "https"
+    return fb if fb in services else None
 
 
 # Mapa de respaldo por puerto cuando nmap no identifica el servicio.
@@ -56,21 +74,26 @@ def plan(ports: List[Port], target: str, rules: dict) -> List[Action]:
     actions: List[Action] = []
 
     for p in ports:
-        key = _canonical(p.service, p.port, aliases)
-        if key not in services:
-            key = _PORT_FALLBACK.get(p.port)
-        if not key or key not in services:
+        key = _service_key(p, aliases, services)
+        if not key:
             continue
         for entry in services[key]:
-            cmdline = entry["cmd"].format(target=target, port=p.port)
-            tool = entry["tool"]
+            tool = entry.get("tool")
+            cmd = entry.get("cmd")
+            if not tool or not cmd:
+                continue  # entrada de regla mal formada: la saltamos
+            try:
+                cmdline = cmd.format(target=target, port=p.port)
+            except (KeyError, IndexError):
+                # placeholder desconocido en la plantilla: no rompemos el plan
+                cmdline = cmd
             actions.append(Action(
                 service=key,
                 port=p.port,
                 tool=tool,
                 cmdline=cmdline,
                 note=entry.get("note", ""),
-                run_default=entry.get("run_default", False),
+                run_default=bool(entry.get("run_default", False)),
                 available=have(tool),
             ))
     return actions

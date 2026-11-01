@@ -17,6 +17,7 @@ Ejemplos:
 
 import argparse
 import sys
+from pathlib import Path
 
 from core import __version__
 from core.scanner import scan
@@ -33,8 +34,8 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("target", help="IP o hostname del objetivo (lab autorizado)")
-    p.add_argument("-r", "--rules", default="rules.json",
-                   help="archivo de reglas de enumeración (def: rules.json)")
+    p.add_argument("-r", "--rules", default=None,
+                   help="archivo de reglas (def: rules.json junto al script)")
     p.add_argument("--full", action="store_true",
                    help="escaneo de los 65535 puertos (más lento)")
     p.add_argument("--run", action="store_true",
@@ -82,10 +83,16 @@ def main():
         print(f"{C.RED}[!] Cancelado. Solo objetivos autorizados.{C.RESET}")
         sys.exit(1)
 
+    # Resuelve rules.json junto al script (ubicación real del proyecto) si no
+    # se indicó otra ruta, para que funcione desde cualquier directorio.
+    script_dir = Path(__file__).resolve().parent
+    rules_path = Path(args.rules) if args.rules else script_dir / "rules.json"
+
     try:
-        rules = load_rules(args.rules)
-    except (FileNotFoundError, ValueError) as exc:
-        print(f"{C.RED}[!] No pude cargar las reglas: {exc}{C.RESET}", file=sys.stderr)
+        rules = load_rules(str(rules_path))
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        print(f"{C.RED}[!] No pude cargar las reglas ({rules_path}): {exc}{C.RESET}",
+              file=sys.stderr)
         sys.exit(1)
 
     try:

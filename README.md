@@ -27,6 +27,8 @@ Herramienta **exclusivamente para sistemas que controlas o para los que tienes a
 - 📄 Reporte en **consola**, **Markdown** y **HTML**
 - 🪶 **Cero dependencias de Python** (solo stdlib); orquesta binarios externos
 - 🔒 Comandos ejecutados **sin shell** (lista de argumentos) — sin inyección
+- 🔐 **Detección de TLS**: un servicio HTTP sobre SSL (p.ej. el 443) usa `https` en las recomendaciones
+- 🧯 **Robusto**: rutas basadas en la ubicación del proyecto (`pathlib`); un fallo en la fase 2 de nmap no tira la fase 1; XML inválido se reporta con claridad
 
 ---
 
@@ -118,6 +120,18 @@ reconflow/
 │   └── utils.py          # colores, detección de binarios, validación
 ├── LICENSE · README.md
 ```
+
+---
+
+## 🧪 Pruebas
+
+Tests unitarios con `unittest` (XML simulado, sin ejecutar nmap):
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Cubren: parseo de XML (puertos abiertos, versión, detección de TLS por `tunnel`), manejo de XML vacío/inválido, resolución de `rules.json` desde cualquier directorio, mapeo de servicios a `https` sobre TLS, alias y fallback por puerto, y reglas mal formadas.
 
 ---
 
